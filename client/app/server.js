@@ -61,52 +61,60 @@ export function postStatusUpdate(user, location, contents, cb) {
   // we're mocking it, we can be less strict.
 
   // Get the current UNIX time.
-  var time = new Date().getTime();
-  // The new status update. The database will assign the ID for us.
-  var newStatusUpdate = {
-    "likeCounter": [],
-    "type": "statusUpdate",
-    "contents": {
-      "author": user,
-      "postDate": time,
-      "location": location,
-      "contents": contents,
-      "likeCounter": []
-    },
-    // List of comments on the post
-    "comments": []
-  };
-
-  // Add the status update to the database.
-  // Returns the status update w/ an ID assigned.
-  newStatusUpdate = addDocument('feedItems', newStatusUpdate);
-
-  // Add the status update reference to the front of the current user's feed.
-  var userData = readDocument('users', user);
-  var feedData = readDocument('feeds', userData.feed);
-  feedData.contents.unshift(newStatusUpdate._id);
-
-  // Update the feed object.
-  writeDocument('feeds', feedData);
-
-  // Return the newly-posted object.
-  emulateServerReturn(newStatusUpdate, cb);
-}
-
-/**
- * Adds a new comment to the database on the given feed item.
- */
-export function postComment(feedItemId, author, contents, cb) {
-  var feedItem = readDocument('feedItems', feedItemId);
-  feedItem.comments.push({
-    "author": author,
-    "contents": contents,
-    "postDate": new Date().getTime(),
-    "likeCounter": []
+//   var time = new Date().getTime();
+//   // The new status update. The database will assign the ID for us.
+//   var newStatusUpdate = {
+//     "likeCounter": [],
+//     "type": "statusUpdate",
+//     "contents": {
+//       "author": user,
+//       "postDate": time,
+//       "location": location,
+//       "contents": contents,
+//       "likeCounter": []
+//     },
+//     // List of comments on the post
+//     "comments": []
+//   };
+//
+//   // Add the status update to the database.
+//   // Returns the status update w/ an ID assigned.
+//   newStatusUpdate = addDocument('feedItems', newStatusUpdate);
+//
+//   // Add the status update reference to the front of the current user's feed.
+//   var userData = readDocument('users', user);
+//   var feedData = readDocument('feeds', userData.feed);
+//   feedData.contents.unshift(newStatusUpdate._id);
+//
+//   // Update the feed object.
+//   writeDocument('feeds', feedData);
+//
+//   // Return the newly-posted object.
+//   emulateServerReturn(newStatusUpdate, cb);
+// }
+//
+// /**
+//  * Adds a new comment to the database on the given feed item.
+//  */
+// export function postComment(feedItemId, author, contents, cb) {
+//   var feedItem = readDocument('feedItems', feedItemId);
+//   feedItem.comments.push({
+//     "author": author,
+//     "contents": contents,
+//     "postDate": new Date().getTime(),
+//     "likeCounter": []
+//   });
+//   writeDocument('feedItems', feedItem);
+//   // Return a resolved version of the feed item.
+//   emulateServerReturn(getFeedItemSync(feedItemId), cb);
+  sendXHR('POST', '/feeditem', {
+    userId: user,
+    location: location,
+    contents: contents
+  }, (xhr) => {
+  // Return the new status update.
+    cb(JSON.parse(xhr.responseText));
   });
-  writeDocument('feedItems', feedItem);
-  // Return a resolved version of the feed item.
-  emulateServerReturn(getFeedItemSync(feedItemId), cb);
 }
 
 /**
@@ -169,6 +177,7 @@ export function unlikeComment(feedItemId, commentIdx, userId, cb) {
   }
   comment.author = readDocument('users', comment.author);
   emulateServerReturn(comment, cb);
+
 }
 
 /**
