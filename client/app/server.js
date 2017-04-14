@@ -118,6 +118,19 @@ export function postStatusUpdate(user, location, contents, cb) {
 }
 
 /**
+ * Adds a new comment to the database on the given feed item.
+ */
+export function postComment(feedItemId, author, contents, cb) {
+  sendXHR('POST', '/feeditem/' + feedItemId + '/commentthread/', {
+     "author" : author,
+     "contents" : contents,
+     "postDate": new Date().getTime()
+   }, (xhr) => {
+  cb(JSON.parse(xhr.responseText))
+  });
+}
+
+/**
  * Updates a feed item's likeCounter by adding the user to the likeCounter.
  * Provides an updated likeCounter in the response.
  */
@@ -143,27 +156,20 @@ export function unlikeFeedItem(feedItemId, userId, cb) {
  * Adds a 'like' to a comment.
  */
 export function likeComment(feedItemId, commentIdx, userId, cb) {
-  var feedItem = readDocument('feedItems', feedItemId);
-  var comment = feedItem.comments[commentIdx];
-  comment.likeCounter.push(userId);
-  writeDocument('feedItems', feedItem);
-  comment.author = readDocument('users', comment.author);
-  emulateServerReturn(comment, cb);
+  sendXHR('PUT', '/feeditem/' + feedItemId + "/commentthread/" + commentIdx +
+           "/likelist/" + userId, undefined, (xhr) => {
+             cb(JSON.parse(xhr.responseText));
+  });
 }
 
 /**
  * Removes a 'like' from a comment.
  */
 export function unlikeComment(feedItemId, commentIdx, userId, cb) {
-  var feedItem = readDocument('feedItems', feedItemId);
-  var comment = feedItem.comments[commentIdx];
-  var userIndex = comment.likeCounter.indexOf(userId);
-  if (userIndex !== -1) {
-    comment.likeCounter.splice(userIndex, 1);
-    writeDocument('feedItems', feedItem);
-  }
-  comment.author = readDocument('users', comment.author);
-  emulateServerReturn(comment, cb);
+  sendXHR('DELETE', '/feeditem/' + feedItemId + "/commentthread/" + commentIdx +
+           "/likelist/" + userId, undefined, (xhr) => {
+             cb(JSON.parse(xhr.responseText));
+    });
 
 }
 
